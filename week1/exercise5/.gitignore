@@ -1,0 +1,18 @@
+# Secrets — copy .env.example to .env and edit locally
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Runtime data (SQLite database, uploaded images)
+data/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
