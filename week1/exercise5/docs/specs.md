@@ -2,7 +2,7 @@
 
 A chat app built in stages. The browser talks only to a FastAPI backend, and the backend talks to an LLM through an OpenAI-compatible API. The frontend is plain HTML, CSS and JavaScript. It renders replies as markdown and has a **context viewer** that shows exactly what is sent to the model and how many tokens come back.
 
-Status: **draft, nothing built yet.**
+Status: **Stages 1–4 built.**
 
 ---
 
@@ -80,7 +80,7 @@ All configuration lives in `.env` at the project root. **`.env` is gitignored an
 | `FRONTEND_PORT` | `6661` | no | Port for the static frontend |
 | `CORS_ORIGINS` | `http://localhost:6661` | no | Comma-separated list of allowed browser origins |
 | `MAX_IMAGE_MB` | `5` | no | Largest image upload allowed (Stage 3) |
-| `DATABASE_URL` | `sqlite:///./data/chat.db` | no | Database location (Stage 4) |
+| `DATABASE_URL` | `sqlite:///./data/chat.db` | no | Database location (Stage 4). Relative paths start from the backend's working directory (`backend/` locally, `/app` in Docker). Images go in `uploads/` next to the SQLite file |
 
 Example presets to document in `.env.example` and the README:
 
@@ -231,11 +231,11 @@ The backend adds the system prompt (see [§5](#system-prompt)) to the start of t
 
 **Done when**
 - [ ] Chat works against a cloud provider and against a local model, switched only by editing `.env`.
-- [ ] Replies render as markdown, and HTML in model output is sanitized.
-- [ ] The context viewer shows the messages sent and the token usage for each turn. Both chart views grow with each turn, and the toggle switches between them.
-- [ ] The context-size warning appears at 80% and 100% of `LLM_CONTEXT_WINDOW`.
-- [ ] Runs locally and with `docker compose up`.
-- [ ] `.env` is gitignored and `.env.example` is committed. The README covers setup.
+- [x] Replies render as markdown, and HTML in model output is sanitized.
+- [x] The context viewer shows the messages sent and the token usage for each turn. Both chart views grow with each turn, and the toggle switches between them.
+- [x] The context-size warning appears at 80% and 100% of `LLM_CONTEXT_WINDOW`.
+- [x] Runs locally and with `docker compose up`.
+- [x] `.env` is gitignored and `.env.example` is committed. The README covers setup.
 
 ### Stage 2 — Advanced (streaming)
 The backend streams from the model and relays that stream to the browser as Server-Sent Events, so the answer appears token by token.
@@ -261,12 +261,21 @@ event: error     data: { "message": "..." }        (instead of done, on failure)
 - Frontend: `EventSource` only supports GET, so the client uses `fetch()` with a `ReadableStream` reader and a small SSE parser.
 - The markdown re-render is throttled with `requestAnimationFrame` so long replies stay smooth. A code fence that hasn't closed yet must still render reasonably.
 - A **Stop** button replaces Send while streaming and aborts the request through `AbortController`.
-- Stage 1's `/api/chat` stays available. The UI uses streaming by default.
+- Stage 1's `/api/chat` stays available. The UI uses streaming by default; `STREAMING = false` in `frontend/config.js` switches it back to `/api/chat`.
+
+**Behavior decided while building**
+- Validation errors (empty `messages`, only system messages) are still plain JSON errors with a 4xx status. Once the stream has started the status is already 200, so every upstream failure, including one before the first token, arrives as an `error` event: `{ "code", "message", "status" }` with the same codes and messages as Stage 1.
+- `context` is sent once the provider accepts the request, so it always echoes the payload that was really sent (with or without `stream_options`).
+- `usage` is always sent before `done`; its data is `null` when the provider reported none.
+- A server that ignores `"stream": true` and answers with one JSON body is relayed as a single `delta`.
+- `LLM_TIMEOUT_SECONDS` applies to each wait for the next chunk, not to the whole reply.
+- The backend races every upstream read against the browser's disconnect, so Stop closes the upstream request even while the model is still thinking and no chunk is being written.
+- Stop keeps the partial reply in the chat and in the history, marked "Stopped" and without usage. Stopping before any text arrives shows a note with **Retry**. A failure mid-stream drops the partial text and shows the error bubble with **Retry**.
 
 **Done when**
-- [ ] Text appears progressively, and the backend relays chunks without buffering them.
-- [ ] Stop cancels both the browser request and the upstream request.
-- [ ] Token usage arrives at the end of the stream and updates the context viewer.
+- [x] Text appears progressively, and the backend relays chunks without buffering them.
+- [x] Stop cancels both the browser request and the upstream request.
+- [x] Token usage arrives at the end of the stream and updates the context viewer.
 
 ### Stage 3 — Best (vision)
 If `LLM_SUPPORTS_VISION=true`, the user can attach an image to a message.
@@ -287,10 +296,18 @@ If `LLM_SUPPORTS_VISION=true`, the user can attach an image to a message.
 - The backend checks the MIME type and size, and returns a 400 with a clear message if vision is turned off.
 - The context viewer shows image parts as shortened placeholders and a small thumbnail.
 
+**Behavior decided while building**
+- Up to `MAX_IMAGES_PER_MESSAGE` images per message (4, set in `frontend/config.js`). A message can be an image with no text.
+- `MAX_IMAGE_MB` is checked twice in the browser (on the original file, and again after shrinking) and once in the backend (on the decoded bytes).
+- The canvas cannot encode GIF, so a GIF larger than 1568 px is sent as a PNG of its first frame. Images that are already small enough are sent unchanged.
+- The backend accepts only `data:` URLs, so it can check every image. It compares the declared MIME type with the file's first bytes and rejects a mismatch. Images are only allowed in `user` messages.
+- Error codes: `vision_disabled` (vision is off), `invalid_image` (wrong type, not base64, not a data URL, contents don't match the type) and `image_too_large`, all with status 400.
+- The token charts mark turns whose message carried an image with a small picture icon, and the tooltip lists the image count. **Raw JSON** also shortens base64 data to the placeholder.
+
 **Done when**
-- [ ] Image + question works with a vision-capable model, streamed.
-- [ ] The attach button is hidden when vision is off, and the backend rejects images in that case.
-- [ ] The image shows up in the context viewer, and the token jump from the image is visible.
+- [ ] Image + question works with a vision-capable model, streamed. (Verified end to end against a mock OpenAI-compatible server, not yet against a real vision model.)
+- [x] The attach button is hidden when vision is off, and the backend rejects images in that case.
+- [x] The image shows up in the context viewer, and the token jump from the image is visible.
 
 ### Stage 4 — Chat history (SQLite)
 Conversations are saved in SQLite and listed in a sidebar. There are no logins yet, but every record belongs to an **account**, so authentication can be added later without a schema migration.
@@ -304,6 +321,7 @@ Conversations are saved in SQLite and listed in a sidebar. There are no logins y
 | PATCH | `/api/conversations/{id}` | Rename |
 | DELETE | `/api/conversations/{id}` | Delete, including its messages and attachments |
 | POST | `/api/conversations/{id}/messages` | Send a new user message. Streams the reply over SSE like Stage 2, then saves both messages |
+| GET | `/api/attachments/{id}` | An image saved with a message, so the chat can show it after a reload |
 
 **Account scoping**
 - A FastAPI dependency `get_current_account()` returns the seeded default account (`local`) for now. Every query filters by `account_id`.
@@ -317,10 +335,22 @@ Conversations are saved in SQLite and listed in a sidebar. There are no logins y
 - Images are saved as files under `data/uploads/` and referenced from the database. They are converted back to data URLs when the context is rebuilt.
 - The stateless `/api/chat` and `/api/chat/stream` endpoints remain available.
 
+**Behavior decided while building**
+- `POST /api/conversations/{id}/messages` takes `{ "content": "..." | [content parts] }`. Its events are those of Stage 2 plus `saved` (`{ "conversation": { id, title, created_at, updated_at } }`), sent after `usage` and just before `done`.
+- The UI creates a conversation only when its first message is sent, so **New chat** never leaves empty conversations behind. The open conversation is kept in the URL hash (`#/c/<id>`), so a reload reopens it and the browser's Back button works.
+- Saving follows the Stage 2 rules. A finished reply saves both messages. A reply stopped after some text saves the partial reply with `finish_reason: "stopped"` and no usage. A failed reply, or one stopped before any text, saves nothing, and the UI marks the user message **Not sent** so **Retry** sends it again.
+- `title` is `null` until the first message is saved. It is then the first 60 characters of that message (or "Image" for an image-only message). A conversation renamed before its first message keeps its name.
+- Switching conversations while a reply streams stops that reply; the backend keeps the partial text as above.
+- After a reload, the context viewer rebuilds the turns and token charts from the saved usage. **Messages sent** stays empty until the next message, because the payload itself is not stored.
+- Images are stored as `data/uploads/<conversation id>/<attachment id>.<ext>`. Deleting a conversation removes that folder.
+- The default account has a fixed id (a UUID derived from the name `local`), so it is the same in every fresh database.
+- `HISTORY = false` in `frontend/config.js` switches the UI back to the stateless Stage 1–3 behavior (no sidebar). `STREAMING` only applies in that mode.
+- Below 1240 px the chat list becomes a slide-over, and below 960 px the context viewer does too.
+
 **Done when**
-- [ ] Conversations survive a page reload and a container restart (volume).
-- [ ] The sidebar lists, switches, renames and deletes conversations.
-- [ ] All data access goes through the account dependency.
+- [ ] Conversations survive a page reload and a container restart (volume). (Reload verified in the browser and a restart simulated in the tests; not yet checked with `docker compose restart`.)
+- [x] The sidebar lists, switches, renames and deletes conversations.
+- [x] All data access goes through the account dependency.
 
 ---
 
@@ -494,7 +524,10 @@ exercise5/
 │   ├── app/
 │   │   ├── main.py            # FastAPI app, CORS, routers
 │   │   ├── config.py          # pydantic-settings
+│   │   ├── errors.py          # AppError: status + code + message for the browser
 │   │   ├── llm.py             # httpx client for /chat/completions: call + stream helpers
+│   │   ├── images.py          # Stage 3: data URL decoding, type and size checks
+│   │   ├── attachments.py     # Stage 4: image files under data/uploads/
 │   │   ├── schemas.py         # request/response models
 │   │   ├── routers/
 │   │   │   ├── chat.py        # /api/chat, /api/chat/stream
@@ -506,7 +539,8 @@ exercise5/
 │   ├── index.html
 │   ├── config.js              # API_BASE_URL
 │   ├── css/  (tokens.css, base.css, components.css)
-│   ├── js/   (main.js, api.js, sse.js, chat.js, markdown.js, context-viewer.js, history.js)
+│   ├── js/   (main.js, api.js, sse.js, chat.js, markdown.js, context-viewer.js, dom.js,
+│   │          images.js, attachments.js, history.js, panels.js)
 │   └── vendor/ (marked, dompurify, fonts)
 ├── data/                      # SQLite and uploads (gitignored, Docker volume)
 ├── docker-compose.yml

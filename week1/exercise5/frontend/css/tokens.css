@@ -1,0 +1,107 @@
+/* Design tokens: every color, radius and spacing value used by the app. */
+
+@font-face {
+  font-family: "Fredoka";
+  src: url("../vendor/fonts/fredoka-latin-wght-normal.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("../vendor/fonts/nunito-latin-wght-normal.woff2") format("woff2");
+  font-weight: 200 1000;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../vendor/fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
+}
+
+:root {
+  /* Teal: primary */
+  --teal-50: #EBF4F0;
+  --teal-100: #CCE5E3;
+  --teal-200: #9ED0D0;
+  --teal-300: #6BB9BC;
+  --teal-400: #339FA5;
+  --teal-500: #008790;
+  --teal-600: #01737B;
+  --teal-700: #036068;
+  --teal-800: #044D54;
+  --teal-900: #053D43;
+
+  /* Coral: secondary */
+  --coral-50: #FFF3EB;
+  --coral-100: #FFE3D9;
+  --coral-200: #FFCBBC;
+  --coral-300: #FFB19D;
+  --coral-400: #FF947A;
+  --coral-500: #FF7A5B;
+  --coral-600: #DF654A;
+  --coral-700: #C2523C;
+  --coral-800: #A53E2C;
+  --coral-900: #8B2D1F;
+
+  /* Sun: accent */
+  --sun-50: #FFF9EC;
+  --sun-100: #FEF3DB;
+  --sun-200: #FEEAC1;
+  --sun-300: #FDDFA4;
+  --sun-400: #FDD484;
+  --sun-500: #FCCA67;
+  --sun-600: #DCAB51;
+  --sun-700: #BF8F3E;
+  --sun-800: #A2732A;
+  --sun-900: #885919;
+
+  /* Neutrals */
+  --ink: #13262B;
+  --ink-muted: #52646A; /* 6.1:1 on paper, 5.9:1 on canvas */
+  --paper: #FFFDF8;
+  --canvas: var(--sun-50);
+  --white: #FFFFFF;
+
+  /* Status */
+  --error: #B42318;
+  --success: var(--teal-600);
+  --warning-bg: var(--sun-500);
+  --warning-text: var(--ink);
+
+  /* Roles: shared by chat, context viewer and charts */
+  --role-system: var(--teal-500);
+  --role-user: var(--coral-500);
+  --role-assistant: var(--sun-500);
+  --tokens-prompt: var(--teal-500);
+  --tokens-completion: var(--coral-500);
+
+  /* Shape */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+  --stroke: 2.5px;
+  --ledge-btn: 4px;
+  --ledge-card: 3px;
+
+  /* Spacing */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* Type */
+  --font-heading: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-base: 16px;
+  --leading: 1.55;
+
+  --header-h: 68px;
+  --panel-w: 400px;
+  --history-w: 280px;
+}

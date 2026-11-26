@@ -1,0 +1,27 @@
+services:
+  backend:
+    build: ./backend
+    env_file: .env
+    ports:
+      - "${BACKEND_PORT:-6662}:6662"
+    # Lets the container reach a model server running on the host (Ollama, LM Studio)
+    # through host.docker.internal on Linux too. Docker Desktop already provides it.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # The SQLite database and uploaded images (Stage 4) survive container restarts and rebuilds.
+    volumes:
+      - chat-data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "${FRONTEND_PORT:-6661}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  chat-data:

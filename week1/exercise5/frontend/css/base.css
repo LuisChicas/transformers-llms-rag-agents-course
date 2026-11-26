@@ -1,0 +1,273 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading);
+  color: var(--ink);
+  background: var(--canvas);
+  overflow: hidden;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+}
+
+a {
+  color: var(--teal-700);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--teal-800);
+}
+
+code, pre, kbd {
+  font-family: var(--font-mono);
+  /* Ligatures turn "==" or "->" into single glyphs, which misleads readers copying code. */
+  font-variant-ligatures: none;
+}
+
+button, textarea, input {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--teal-700);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--sun-300);
+  color: var(--ink);
+}
+
+/* Components set their own display, which would otherwise override the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Background decoration. It sits behind solid panels, so it never sits behind body text. */
+.decor {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ---------- Page layout ---------- */
+
+.app-header {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: 0 var(--s-5);
+  background: var(--paper);
+  border-bottom: var(--stroke) solid var(--ink);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.brand-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--teal-800);
+  white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.layout {
+  height: calc(100% - var(--header-h));
+  display: flex;
+}
+
+body.context-closed .context-panel,
+body.history-closed .history-panel,
+body.no-history .history-panel,
+body.no-history #history-toggle {
+  display: none;
+}
+
+.chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.transcript {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.transcript > * {
+  width: 100%;
+  max-width: 860px;
+  margin-inline: auto;
+}
+
+.context-panel {
+  flex: 0 0 var(--panel-w);
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--paper);
+  border-left: var(--stroke) solid var(--ink);
+  padding: var(--s-4) var(--s-4) var(--s-6);
+}
+
+.history-panel {
+  flex: 0 0 var(--history-w);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--paper);
+  border-right: var(--stroke) solid var(--ink);
+  padding: var(--s-4) var(--s-3) var(--s-5);
+}
+
+.panel-backdrop {
+  display: none;
+}
+
+.panel-backdrop:not([hidden]) {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgb(19 38 43 / 0.45);
+}
+
+/* With three columns the chat gets cramped first, so the chat list becomes a slide-over
+   at a wider breakpoint than the context viewer. */
+@media (max-width: 1240px) {
+  .history-panel,
+  body.history-closed .history-panel {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(var(--history-w), 88vw);
+    z-index: 20;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 160ms ease-out, visibility 0s linear 160ms;
+  }
+
+  body.history-open-mobile .history-panel {
+    transform: none;
+    visibility: visible;
+    transition: transform 160ms ease-out;
+  }
+
+  body.no-history .history-panel {
+    display: none;
+  }
+}
+
+/* On narrow screens the context viewer becomes a slide-over panel too. */
+@media (max-width: 960px) {
+  .context-panel,
+  body.context-closed .context-panel {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(var(--panel-w), 92vw);
+    z-index: 20;
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 160ms ease-out, visibility 0s linear 160ms;
+  }
+
+  body.context-open-mobile .context-panel {
+    transform: none;
+    visibility: visible;
+    transition: transform 160ms ease-out;
+  }
+
+  .app-header {
+    padding: 0 var(--s-4);
+  }
+
+  .brand-name {
+    font-size: 1.25rem;
+  }
+
+  .transcript {
+    padding: var(--s-4) var(--s-3);
+  }
+}
+
+/* Header buttons shrink to their icons on phones. */
+@media (max-width: 640px) {
+  .header-actions .btn-label {
+    display: none;
+  }
+
+  .header-actions .btn {
+    padding-inline: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
