@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     )
 
     llm_base_url: str
-    llm_api_key: str = Field(repr=False)
+    # Local servers such as Ollama and LM Studio need no key.
+    llm_api_key: str = Field(default="", repr=False)
     llm_model: str
     llm_supports_vision: bool = False
     llm_system_prompt: str | None = None

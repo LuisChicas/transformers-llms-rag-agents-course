@@ -62,7 +62,7 @@ async def handle_validation_error(_: Request, error: RequestValidationError) -> 
 
 @app.get("/api/health", response_model=Health, tags=["meta"])
 async def health(current: Annotated[Settings, Depends(get_settings)]) -> Health:
-    return Health(llm_configured=bool(current.llm_base_url and current.llm_api_key and current.llm_model))
+    return Health(llm_configured=bool(current.llm_base_url and current.llm_model))
 
 
 @app.get("/api/config", response_model=PublicConfig, tags=["meta"])

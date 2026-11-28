@@ -63,7 +63,7 @@ class LLMClient:
         self._settings = settings
         self._http = httpx.AsyncClient(
             base_url=settings.llm_base_url,
-            headers={"Authorization": f"Bearer {settings.llm_api_key}"},
+            headers={"Authorization": f"Bearer {settings.llm_api_key}"} if settings.llm_api_key else None,
             timeout=httpx.Timeout(settings.llm_timeout_seconds),
             transport=transport,
         )
@@ -253,4 +253,6 @@ class LLMClient:
         return response.text[:300]
 
     def _scrub(self, text: str) -> str:
+        if not self._settings.llm_api_key:
+            return text
         return text.replace(self._settings.llm_api_key, "***")

@@ -17,7 +17,7 @@ A small chat app where the browser talks only to a **FastAPI backend**, and the 
 ## Quick start (Docker)
 
 ```bash
-cp .env.example .env      # then edit .env: set LLM_BASE_URL, LLM_API_KEY and LLM_MODEL
+cp .env.example .env      # then edit .env: set LLM_BASE_URL, LLM_MODEL and (hosted providers only) LLM_API_KEY
 docker compose up --build
 ```
 
@@ -27,15 +27,15 @@ Open **http://localhost:6661**. The backend runs on http://localhost:6662 (API d
 
 ## Provider presets
 
-Set these three values in `.env`:
+Set these values in `.env`:
 
 | Provider | `LLM_BASE_URL` | `LLM_API_KEY` | `LLM_MODEL` (example) |
 |---|---|---|---|
 | OpenAI | `https://api.openai.com/v1` | your `sk-...` key | `gpt-4o-mini` |
 | OpenRouter | `https://openrouter.ai/api/v1` | your `sk-or-...` key | `openai/gpt-4o-mini` |
 | Groq | `https://api.groq.com/openai/v1` | your `gsk_...` key | `llama-3.1-8b-instant` |
-| Ollama | `http://localhost:11434/v1` | any value, e.g. `ollama` | `llama3.2` |
-| LM Studio | `http://localhost:1234/v1` | any value, e.g. `lm-studio` | the model id shown in LM Studio |
+| Ollama | `http://localhost:11434/v1` | not needed | `llama3.2` |
+| LM Studio | `http://localhost:1234/v1` | not needed | the model id shown in LM Studio |
 
 > **Local models with Docker.** Inside the backend container, `localhost` means the container itself, not your machine. When the backend runs in Docker and the model runs on your machine, use `host.docker.internal` instead:
 > ```dotenv
@@ -85,7 +85,7 @@ Every variable is documented in [.env.example](.env.example).
 | Variable | Default | Purpose |
 |---|---|---|
 | `LLM_BASE_URL` | **required** | Base URL of the OpenAI-compatible API |
-| `LLM_API_KEY` | **required** | API key. Local servers accept any non-empty value |
+| `LLM_API_KEY` | empty | API key for hosted providers. Leave unset for local servers (Ollama, LM Studio) |
 | `LLM_MODEL` | **required** | Model name sent with every request |
 | `LLM_SUPPORTS_VISION` | `false` | Turns on image attachments (Stage 3) |
 | `LLM_SYSTEM_PROMPT` | built-in default | Replaces the default system prompt. Use `"line one\nline two"` for several lines |

@@ -161,6 +161,21 @@ def test_wildcard_cors_is_rejected():
         make_settings(cors_origins="*")
 
 
+def test_api_key_is_optional_and_omits_authorization_header(client_factory):
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(400, json={"error": {"message": "bad request"}})
+
+    client = client_factory(handler, llm_api_key="")
+    response = client.post("/api/chat", json={"messages": [{"role": "user", "content": "Hello"}]})
+
+    assert "authorization" not in seen[0].headers
+    # Error scrubbing must leave the message intact when there is no key to hide.
+    assert "bad request" in response.json()["error"]["message"]
+
+
 def test_missing_required_settings_exit_with_clear_message(monkeypatch, capsys):
     for name in ("LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL"):
         monkeypatch.delenv(name, raising=False)
@@ -174,6 +189,7 @@ def test_missing_required_settings_exit_with_clear_message(monkeypatch, capsys):
     err = capsys.readouterr().err
     assert "LLM_BASE_URL is required but not set" in err
     assert "LLM_MODEL is required but not set" in err
+    assert "LLM_API_KEY" not in err
 
 
 def test_cors_allows_configured_origin(client_factory):
