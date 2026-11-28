@@ -73,7 +73,7 @@ All configuration lives in `.env` at the project root. **`.env` is gitignored an
 | `LLM_MODEL` | `gpt-4o-mini` | yes | Model name sent in each request |
 | `LLM_SUPPORTS_VISION` | `false` | no | Turns on image attachments (Stage 3). There is no reliable way to detect this automatically, so it is set by hand |
 | `LLM_SYSTEM_PROMPT` | _(empty)_ | no | Custom system prompt. When empty, the built-in default is used (see [§5](#system-prompt)) |
-| `LLM_TEMPERATURE` | `0.7` | no | Sampling temperature |
+| `LLM_TEMPERATURE` | _(empty)_ | no | Sampling temperature. When empty, it is left out of the request and the provider's default applies. Newer Claude models reject any value |
 | `LLM_TIMEOUT_SECONDS` | `120` | no | How long to wait for the model before giving up |
 | `LLM_CONTEXT_WINDOW` | `128000` | no | The model's context window in tokens. Used only for the context-size warning. If empty, the warning is turned off |
 | `BACKEND_PORT` | `6662` | no | FastAPI port |
@@ -224,7 +224,7 @@ Response: {
   "usage":   { "prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0 } | null,
   "model":   "gpt-4o-mini",
   "finish_reason": "stop",
-  "request": { "model": "...", "messages": [ ... ], "temperature": 0.7 }
+  "request": { "model": "...", "messages": [ ... ], "temperature": 0.7 }   // temperature only when LLM_TEMPERATURE is set
 }
 ```
 The backend adds the system prompt (see [§5](#system-prompt)) to the start of the messages. That is why the echoed `request` can differ from what the client sent. If the client sends a `system` message, the backend drops it.

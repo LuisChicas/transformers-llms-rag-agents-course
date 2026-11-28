@@ -32,7 +32,21 @@ def test_chat_returns_reply_usage_and_exact_request(client_factory):
     assert upstream.headers["authorization"] == f"Bearer {API_KEY}"
     # The echoed request is byte-for-byte what the model received.
     assert body["request"] == json.loads(upstream.content)
-    assert body["request"]["temperature"] == 0.7
+    assert "temperature" not in body["request"]
+
+
+def test_temperature_is_sent_only_when_set(client_factory):
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return completion_response(usage=USAGE)
+
+    client = client_factory(handler, llm_temperature=0.3)
+    response = client.post("/api/chat", json={"messages": [{"role": "user", "content": "Hi"}]})
+
+    assert response.status_code == 200
+    assert json.loads(seen[0].content)["temperature"] == 0.3
 
 
 def test_system_prompt_is_added_and_client_system_messages_are_dropped(client_factory):

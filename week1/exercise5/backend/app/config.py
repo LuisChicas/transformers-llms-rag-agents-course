@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     llm_model: str
     llm_supports_vision: bool = False
     llm_system_prompt: str | None = None
-    llm_temperature: float = 0.7
+    # None leaves `temperature` out of the request; newer Claude models reject any value.
+    llm_temperature: float | None = None
     llm_timeout_seconds: float = Field(default=120, gt=0)
     llm_context_window: int | None = Field(default=None, gt=0)
 

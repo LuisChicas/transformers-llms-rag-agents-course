@@ -382,7 +382,7 @@
 .markdown ul,
 .markdown ol,
 .markdown blockquote,
-.markdown table,
+.markdown .table-scroll,
 .markdown .code-block {
   margin: 0 0 var(--s-3);
 }
@@ -426,14 +426,15 @@
   border-radius: 6px;
 }
 
-.markdown table {
-  display: block;
-  max-width: 100%;
+.table-scroll {
   overflow-x: auto;
-  border-collapse: separate;
-  border-spacing: 0;
   border: 2px solid var(--ink);
   border-radius: var(--r-sm);
+}
+
+.markdown table {
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .markdown th,
@@ -441,6 +442,28 @@
   padding: 6px 12px;
   text-align: left;
   border-bottom: 1.5px solid var(--teal-100);
+  /* The bubble's `anywhere` would let columns shrink to one character ("Sta|tus"). */
+  overflow-wrap: break-word;
+}
+
+/* Set by fitTables() in markdown.js on tables that fit with room to spare. */
+.table-fill {
+  /* Keeps the stretched table from widening the bubble: its width comes from the other content. */
+  contain: inline-size;
+}
+
+.table-fill table {
+  width: 100%;
+}
+
+.table-fill th:not(:last-child),
+.table-fill td:not(:last-child) {
+  white-space: nowrap;
+}
+
+.table-fill th:last-child,
+.table-fill td:last-child {
+  width: 100%;
 }
 
 .markdown th {

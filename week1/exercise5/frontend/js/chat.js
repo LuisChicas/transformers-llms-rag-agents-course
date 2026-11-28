@@ -1,4 +1,4 @@
-import { renderMarkdown } from "./markdown.js";
+import { fitTables, renderMarkdown } from "./markdown.js";
 import { formatNumber, h } from "./dom.js";
 
 const AVATAR_SVG = `<svg class="avatar" viewBox="0 0 34 34" aria-hidden="true">
@@ -18,6 +18,8 @@ export class ChatView {
   constructor(transcript) {
     this.transcript = transcript;
     this.welcome = transcript.querySelector("#welcome").cloneNode(true);
+    // Bubbles change width when a side panel opens or closes or the window is resized.
+    new ResizeObserver(() => fitTables(transcript)).observe(transcript);
   }
 
   /** Empty the transcript and show the welcome card again. */
@@ -76,7 +78,9 @@ export class ChatView {
       if (!content.isConnected) bubble.replaceChildren(content);
       renderMarkdown(content, text);
       if (follow) this.#scrollToBottom();
+      return follow;
     };
+    const scrollToBottom = () => this.#scrollToBottom();
 
     return {
       /** @param {string} fullText the whole reply so far */
@@ -87,9 +91,11 @@ export class ChatView {
       finish(fullText, usage, { stopped = false, finishReason = null } = {}) {
         cancelAnimationFrame(frame);
         text = fullText;
-        render();
+        const follow = render();
         bubble.classList.remove("streaming");
         bubble.append(usageFooter(usage, { stopped, finishReason }));
+        // The footer makes the bubble taller after render() scrolled, which would leave it just out of view.
+        if (follow) scrollToBottom();
       },
       remove() {
         cancelAnimationFrame(frame);

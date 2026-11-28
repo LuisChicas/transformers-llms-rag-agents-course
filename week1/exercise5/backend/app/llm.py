@@ -38,11 +38,13 @@ def build_payload(settings: Settings, messages: list[ChatMessage]) -> dict[str, 
     """System prompt first, then the client's messages without any system message of its own."""
     # exclude_none drops optional fields the client left out, such as an image's `detail`.
     conversation = [m.model_dump(exclude_none=True) for m in messages if m.role != "system"]
-    return {
+    payload: dict[str, Any] = {
         "model": settings.llm_model,
         "messages": [{"role": "system", "content": settings.system_prompt}, *conversation],
-        "temperature": settings.llm_temperature,
     }
+    if settings.llm_temperature is not None:
+        payload["temperature"] = settings.llm_temperature
+    return payload
 
 
 def parse_usage(raw: Any) -> Usage | None:

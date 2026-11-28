@@ -18,6 +18,36 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
 export function renderMarkdown(element, text) {
   element.innerHTML = DOMPurify.sanitize(marked.parse(text));
   addCodeBlockChrome(element);
+  wrapTables(element);
+  fitTables(element);
+}
+
+// The wrapper scrolls wide tables sideways and draws the border, so the table itself can keep table layout.
+function wrapTables(root) {
+  for (const table of root.querySelectorAll("table")) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-scroll";
+    table.replaceWith(wrapper);
+    wrapper.append(table);
+  }
+}
+
+/**
+ * Stretch every table under `root` that fits at its natural width to the full width of its
+ * bubble, with the last column taking the spare room. CSS alone cannot decide this: a 100%
+ * width on the last column squeezes the other columns to their narrowest width even when
+ * there is room for them, so the stretch is applied only after measuring that the table fits.
+ * Call it again whenever the bubbles change width.
+ */
+export function fitTables(root) {
+  const wrappers = [...root.querySelectorAll(".table-scroll")];
+  // Remove every stretch first and measure afterwards, so the page is laid out only once.
+  for (const wrapper of wrappers) wrapper.classList.remove("table-fill");
+  // The 1px slack keeps a table that already spans the bubble, give or take rounding, unstretched.
+  const fits = wrappers.map(
+    (wrapper) => wrapper.firstElementChild.getBoundingClientRect().width < wrapper.clientWidth - 1,
+  );
+  wrappers.forEach((wrapper, i) => wrapper.classList.toggle("table-fill", fits[i]));
 }
 
 // The Copy buttons are added after sanitizing so they never pass through model-controlled HTML.
